@@ -28,7 +28,8 @@ import (
 )
 
 type SQLString struct {
-	buildsql strings.Builder
+	buildsql        strings.Builder
+	useDoubleQuotes bool
 }
 
 func (t SQLString) String() string {
@@ -43,8 +44,15 @@ func (t *SQLString) AddString(s string, addComma bool) {
 }
 
 func (t *SQLString) AddStringWithQuotes(s string, addComma bool) {
-	quotedS := fmt.Sprintf("'%s'", s)
-	t.buildsql.WriteString(quotedS)
+	var quoteString string
+	if t.useDoubleQuotes {
+		quoteString = "\""
+	} else {
+		quoteString = "'"
+	}
+	t.buildsql.WriteString(quoteString)
+	t.buildsql.WriteString(s)
+	t.buildsql.WriteString(quoteString)
 	if addComma {
 		t.buildsql.WriteString(",")
 	}
@@ -58,12 +66,18 @@ func (t *SQLString) AddStrings(s []string, sep string, addComma bool) {
 }
 
 func (t *SQLString) AddStringsWithQuotes(s []string, sep string, addComma bool) {
-	qSep := "'" + sep + "'"
+	var quoteString string
+	if t.useDoubleQuotes {
+		quoteString = "\""
+	} else {
+		quoteString = "'"
+	}
+	qSep := quoteString + sep + quoteString
 	growSize := len(s) * (len(s[0]) + len(qSep))
 	t.buildsql.Grow(growSize)
-	t.buildsql.WriteString("'")
+	t.buildsql.WriteString(quoteString)
 	t.buildsql.WriteString(strings.Join(s, qSep))
-	t.buildsql.WriteString("'")
+	t.buildsql.WriteString(quoteString)
 	if addComma {
 		t.buildsql.WriteString(",")
 	}
@@ -81,6 +95,10 @@ func (t *SQLString) Reset() {
 	t.buildsql.Reset()
 }
 
-func NewSQLString() *SQLString {
-	return &SQLString{}
+func NewSQLString(useDoubleQuotes bool) *SQLString {
+	var stmt SQLString
+	if useDoubleQuotes {
+		stmt.useDoubleQuotes = true
+	}
+	return &stmt
 }
