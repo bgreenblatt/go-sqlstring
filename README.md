@@ -1,5 +1,5 @@
 # sqlstring
-Helper library for building SQL query strings
+Helper library for building SQL query strings in Go
 
 Notes:
 
