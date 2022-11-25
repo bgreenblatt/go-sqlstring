@@ -32,6 +32,13 @@ type SQLString struct {
 	useDoubleQuotes bool
 }
 
+type SQLStringSelect struct {
+	sqlString SQLString
+	columns   []string
+	tables    []string
+	where     string
+}
+
 func (t SQLString) String() string {
 	return t.buildsql.String()
 }
@@ -101,4 +108,41 @@ func NewSQLString(useDoubleQuotes bool) *SQLString {
 		stmt.useDoubleQuotes = true
 	}
 	return &stmt
+}
+
+func NewSQLStringSelect(useDoubleQuotes bool) *SQLStringSelect {
+	var stmt SQLStringSelect
+	if useDoubleQuotes {
+		stmt.sqlString.useDoubleQuotes = true
+	}
+	return &stmt
+}
+
+func (t *SQLStringSelect) AddColumn(c string, addComma bool) {
+	t.columns = append(t.columns, c)
+}
+
+func (t *SQLStringSelect) AddTable(tbl string, addComma bool) {
+	t.tables = append(t.tables, tbl)
+}
+
+func (t *SQLStringSelect) AddWhere(w string, addComma bool) {
+	t.where = w
+}
+
+func (t *SQLStringSelect) String() string {
+	t.sqlString.Reset()
+	t.sqlString.AddString("SELECT ", false)
+	columns := strings.Join(t.columns, ", ")
+	t.sqlString.AddString(columns, false)
+	tables := strings.Join(t.tables, ", ")
+	t.sqlString.AddString(" FROM ", false)
+	t.sqlString.AddString(tables, false)
+	t.sqlString.AddString(" WHERE ", false)
+	t.sqlString.AddString(t.where, false)
+	return t.sqlString.String()
+}
+
+func (t *SQLStringSelect) Reset() {
+	t.sqlString.Reset()
 }

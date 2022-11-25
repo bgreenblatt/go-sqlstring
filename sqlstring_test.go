@@ -42,10 +42,52 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
-func TestSelect(t *testing.T) {
+func TestRawSelect(t *testing.T) {
 	var stmt SQLString
 
-	stmt.AddString("Select c1 from t1", false)
+	stmt.AddString("SELECT c1 FROM t1 WHERE c2 == ", false)
+	stmt.AddStringWithQuotes("ID2", false)
+
+	_, err := sql.Parse(stmt.String())
+	if err != nil {
+		t.Errorf("Error parsing: %s\n", stmt.String())
+	}
+}
+
+// NOTE: This test uses a private change to the parsing library
+// that supports single quotes
+func TestRawSelect2(t *testing.T) {
+	stmt := NewSQLString(true)
+
+	stmt.AddString("SELECT c1 FROM t1 WHERE c2 == ", false)
+	stmt.AddStringWithQuotes("ID2", false)
+
+	_, err := sql.Parse(stmt.String())
+	if err != nil {
+		t.Errorf("Error parsing: %s\n", stmt.String())
+	}
+}
+
+func TestSelect(t *testing.T) {
+	var stmt SQLStringSelect
+
+	stmt.AddColumn("c1", false)
+	stmt.AddTable("t1", false)
+	stmt.AddWhere("c1 == \"ID2\"", false)
+
+	_, err := sql.Parse(stmt.String())
+	if err != nil {
+		t.Errorf("Error parsing: %s\n", stmt.String())
+	}
+}
+
+func TestSelect2(t *testing.T) {
+	var stmt SQLStringSelect
+
+	stmt.AddColumn("c1", false)
+	stmt.AddColumn("c2", false)
+	stmt.AddTable("t1", false)
+	stmt.AddWhere("c2 == \"ID2\"", false)
 
 	_, err := sql.Parse(stmt.String())
 	if err != nil {
