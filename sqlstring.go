@@ -32,11 +32,34 @@ type SQLString struct {
 	useDoubleQuotes bool
 }
 
+type SelectAllUniqueOption int
+
+const (
+	None SelectAllUniqueOption = iota
+	All
+	Unique
+)
+
+func (s SelectAllUniqueOption) String() string {
+	switch s {
+	case None:
+		return ""
+	case All:
+		return "ALL "
+	case Unique:
+		return "UNIQUE "
+	default:
+		return ""
+	}
+}
+
 type SQLStringSelect struct {
-	sqlString SQLString
-	columns   []string
-	tables    []string
-	where     string
+	allOrUnique SelectAllUniqueOption
+	sqlString   SQLString
+	columns     []string
+	tables      []string
+	where       string
+	groupby     []string
 }
 
 func (t SQLString) String() string {
@@ -130,9 +153,18 @@ func (t *SQLStringSelect) AddWhere(w string, addComma bool) {
 	t.where = w
 }
 
+func (t *SQLStringSelect) AddGroupBy(gb string, addComma bool) {
+	t.groupby = append(t.groupby, gb)
+}
+
+func (t *SQLStringSelect) AddAllUniqueOption(s SelectAllUniqueOption) {
+	t.allOrUnique = s
+}
+
 func (t *SQLStringSelect) String() string {
 	t.sqlString.Reset()
 	t.sqlString.AddString("SELECT ", false)
+	t.sqlString.AddString(t.allOrUnique.String(), false)
 	columns := strings.Join(t.columns, ", ")
 	t.sqlString.AddString(columns, false)
 	tables := strings.Join(t.tables, ", ")
@@ -140,6 +172,11 @@ func (t *SQLStringSelect) String() string {
 	t.sqlString.AddString(tables, false)
 	t.sqlString.AddString(" WHERE ", false)
 	t.sqlString.AddString(t.where, false)
+	if len(t.groupby) > 0 {
+		gbs := strings.Join(t.groupby, ", ")
+		t.sqlString.AddString(" GROUP BY ", false)
+		t.sqlString.AddString(gbs, false)
+	}
 	return t.sqlString.String()
 }
 

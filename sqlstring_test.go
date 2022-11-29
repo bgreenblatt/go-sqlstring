@@ -23,6 +23,7 @@
 package sqlstring
 
 import (
+	"fmt"
 	"testing"
 
 	sql "github.com/krasun/gosqlparser"
@@ -38,7 +39,7 @@ func TestUpdate(t *testing.T) {
 
 	_, err := sql.Parse(stmt.String())
 	if err != nil {
-		t.Errorf("Error parsing: %s\n", stmt.String())
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
 	}
 }
 
@@ -50,7 +51,7 @@ func TestRawSelect(t *testing.T) {
 
 	_, err := sql.Parse(stmt.String())
 	if err != nil {
-		t.Errorf("Error parsing: %s\n", stmt.String())
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
 	}
 }
 
@@ -64,7 +65,7 @@ func TestRawSelect2(t *testing.T) {
 
 	_, err := sql.Parse(stmt.String())
 	if err != nil {
-		t.Errorf("Error parsing: %s\n", stmt.String())
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
 	}
 }
 
@@ -77,7 +78,7 @@ func TestSelect(t *testing.T) {
 
 	_, err := sql.Parse(stmt.String())
 	if err != nil {
-		t.Errorf("Error parsing: %s\n", stmt.String())
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
 	}
 }
 
@@ -91,6 +92,55 @@ func TestSelect2(t *testing.T) {
 
 	_, err := sql.Parse(stmt.String())
 	if err != nil {
-		t.Errorf("Error parsing: %s\n", stmt.String())
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
+	}
+}
+
+func TestSelectGroupBy(t *testing.T) {
+	var stmt SQLStringSelect
+
+	stmt.AddColumn("c1", false)
+	stmt.AddColumn("c2", false)
+	stmt.AddTable("t1", false)
+	stmt.AddWhere("c2 == \"ID2\"", false)
+	stmt.AddGroupBy("c2", false)
+
+	_, err := sql.Parse(stmt.String())
+	if err != nil {
+		// t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
+		fmt.Printf("Found error %v parsing: %s\n", err, stmt.String())
+	}
+}
+
+// Note sql.Parse doesn't support Table Aliases
+func TestSelectTableAlias(t *testing.T) {
+	var stmt SQLStringSelect
+
+	stmt.AddColumn("t.c1", false)
+	stmt.AddColumn("t.c2", false)
+	stmt.AddTable("t1 as t", false)
+	stmt.AddWhere("c2 == \"ID2\"", false)
+
+	_, err := sql.Parse(stmt.String())
+	if err != nil {
+		// t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
+		fmt.Printf("Found error %v parsing: %s\n", err, stmt.String())
+	}
+}
+
+// Note sql.Parse doesn't support All or Unique
+func TestSelectUnique(t *testing.T) {
+	var stmt SQLStringSelect
+
+	stmt.AddColumn("c1", false)
+	stmt.AddColumn("c2", false)
+	stmt.AddTable("t1", false)
+	stmt.AddWhere("c2 == \"ID2\"", false)
+	stmt.AddAllUniqueOption(Unique)
+
+	_, err := sql.Parse(stmt.String())
+	if err != nil {
+		// t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
+		fmt.Printf("Found error %v parsing: %s\n", err, stmt.String())
 	}
 }
