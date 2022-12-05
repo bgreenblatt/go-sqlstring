@@ -62,6 +62,15 @@ type SQLStringSelect struct {
 	groupby     []string
 }
 
+type SQLStringUpdate struct {
+	sqlString SQLString
+	columns   []string
+	values    []string
+	isquoted  []bool
+	table     string
+	where     string
+}
+
 func (t SQLString) String() string {
 	return t.buildsql.String()
 }
@@ -181,5 +190,59 @@ func (t *SQLStringSelect) String() string {
 }
 
 func (t *SQLStringSelect) Reset() {
+	t.sqlString.Reset()
+}
+
+func NewSQLStringUpdate(useDoubleQuotes bool) *SQLStringUpdate {
+	var stmt SQLStringUpdate
+	if useDoubleQuotes {
+		stmt.sqlString.useDoubleQuotes = true
+	}
+	return &stmt
+}
+
+func (t *SQLStringUpdate) AddColumnValue(c string, v string, q bool) {
+	t.columns = append(t.columns, c)
+	t.values = append(t.values, v)
+	t.isquoted = append(t.isquoted, q)
+}
+
+func (t *SQLStringUpdate) AddTable(tbl string, addComma bool) {
+	t.table = tbl
+}
+
+func (t *SQLStringUpdate) AddWhere(w string, addComma bool) {
+	t.where = w
+}
+
+func (t *SQLStringUpdate) String() string {
+	t.sqlString.Reset()
+	t.sqlString.AddString("UPDATE ", false)
+	t.sqlString.AddString(t.table, false)
+	t.sqlString.AddString(" SET ", false)
+	for i := range t.columns {
+		t.sqlString.AddString(t.columns[i], false)
+		t.sqlString.AddString(" = ", false)
+		var addComma bool
+		if i+1 == len(t.columns) {
+			addComma = false
+		} else {
+			addComma = true
+		}
+		if t.isquoted[i] {
+			t.sqlString.AddStringWithQuotes(t.values[i], addComma)
+		} else {
+			t.sqlString.AddString(t.values[i], addComma)
+		}
+		if i+1 < len(t.columns) {
+			t.sqlString.AddString(" ", false)
+		}
+	}
+	t.sqlString.AddString(" WHERE ", false)
+	t.sqlString.AddString(t.where, false)
+	return t.sqlString.String()
+}
+
+func (t *SQLStringUpdate) Reset() {
 	t.sqlString.Reset()
 }

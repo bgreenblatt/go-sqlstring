@@ -29,14 +29,29 @@ import (
 	sql "github.com/krasun/gosqlparser"
 )
 
-func TestUpdate(t *testing.T) {
+func TestRawUpdate(t *testing.T) {
 	stmt := NewSQLString(true)
 
-	stmt.AddString("UPDATE t1 set name = ", false)
+	stmt.AddString("UPDATE t1 SET name = ", false)
 	stmt.AddStringWithQuotes("Bruce", false)
 	stmt.AddString(" WHERE ID == ", false)
 	stmt.AddStringWithQuotes("ID1", false)
 
+	_, err := sql.Parse(stmt.String())
+	if err != nil {
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	stmt := NewSQLStringUpdate(true)
+
+	stmt.AddTable("t1", false)
+	stmt.AddColumnValue("name", "Bruce", true)
+	stmt.AddColumnValue("position", "Engineer", true)
+	stmt.AddWhere("ID == \"ID1\"", false)
+
+	fmt.Printf("SQL Update Statement is %s\n", stmt.String())
 	_, err := sql.Parse(stmt.String())
 	if err != nil {
 		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
