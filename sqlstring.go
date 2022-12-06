@@ -53,6 +53,11 @@ func (s SelectAllDistinctOption) String() string {
 	}
 }
 
+type DefaultValue struct {
+	Value     any
+	UseQuotes bool
+}
+
 type SQLStringSelect struct {
 	allOrDistinct SelectAllDistinctOption
 	sqlString     SQLString
@@ -78,6 +83,18 @@ type SQLStringInsert struct {
 	values     []string
 	isquoted   []bool
 	table      string
+}
+
+type SQLStringDelete struct {
+	sqlString SQLString
+	table     string
+	where     string
+}
+
+type SQLStringCreateTable struct {
+	sqlString SQLString
+	table     string
+	rows      []string
 }
 
 func (t SQLString) String() string {
@@ -322,5 +339,81 @@ func (t *SQLStringInsert) String() string {
 }
 
 func (t *SQLStringInsert) Reset() {
+	t.sqlString.Reset()
+}
+
+func NewSQLStringDelete(useDoubleQuotes bool) *SQLStringDelete {
+	var stmt SQLStringDelete
+	if useDoubleQuotes {
+		stmt.sqlString.useDoubleQuotes = true
+	}
+	return &stmt
+}
+
+func (t *SQLStringDelete) AddTable(tbl string, addComma bool) {
+	t.table = tbl
+}
+
+func (t *SQLStringDelete) AddWhere(w string, addComma bool) {
+	t.where = w
+}
+
+func (t *SQLStringDelete) String() string {
+	t.sqlString.Reset()
+	t.sqlString.AddString("DELETE FROM ", false)
+	t.sqlString.AddString(t.table, false)
+	t.sqlString.AddString(" ", false)
+	if t.where != "" {
+		t.sqlString.AddString(" WHERE ", false)
+		t.sqlString.AddString(t.where, false)
+	}
+	return t.sqlString.String()
+}
+
+func (t *SQLStringDelete) Reset() {
+	t.sqlString.Reset()
+}
+
+func NewSQLStringCreateTable(useDoubleQuotes bool) *SQLStringCreateTable {
+	var stmt SQLStringCreateTable
+	if useDoubleQuotes {
+		stmt.sqlString.useDoubleQuotes = true
+	}
+	return &stmt
+}
+
+func (t *SQLStringCreateTable) AddTable(tbl string, addComma bool) {
+	t.table = tbl
+}
+
+func (t *SQLStringCreateTable) AddRow(cn string, tv string, pk bool, dv *DefaultValue) {
+	var rowString SQLString
+
+	rowString.AddString(cn, false)
+	rowString.AddString(" ", false)
+	rowString.AddString(tv, false)
+	if pk {
+		rowString.AddString(" PRIMARY KEY ", false)
+	} else if dv != nil {
+		rowString.AddString(" DEFAULT ", false)
+		v := fmt.Sprintf("%v", dv.Value)
+		if dv.UseQuotes {
+			rowString.AddStringWithQuotes(v, false)
+		} else {
+			rowString.AddString(v, false)
+		}
+	}
+	t.rows = append(t.rows, rowString.String())
+}
+
+func (t *SQLStringCreateTable) String() string {
+	t.sqlString.Reset()
+	t.sqlString.AddString("CREATE TABLE ", false)
+	t.sqlString.AddString(t.table, false)
+	t.sqlString.AddStringsWithParens(t.rows, ", ", false)
+	return t.sqlString.String()
+}
+
+func (t *SQLStringCreateTable) Reset() {
 	t.sqlString.Reset()
 }

@@ -245,3 +245,38 @@ func TestInsertExec(t *testing.T) {
 		t.Errorf("Error running command: %v", err)
 	}
 }
+
+func TestDelete(t *testing.T) {
+	stmt := NewSQLStringDelete(true)
+
+	stmt.AddTable("t2", false)
+	stmt.AddWhere("c2 = 'ID2'", false)
+
+	err := checkSQL(t, stmt.String())
+	if err != nil {
+		t.Errorf("Error running command: %v", err)
+	}
+}
+
+func TestCreateTable(t *testing.T) {
+	stmt := NewSQLStringCreateTable(true)
+
+	dv1 := DefaultValue{
+		Value:     "CURRENT_TIMESTAMP",
+		UseQuotes: false,
+	}
+	dv2 := DefaultValue{
+		Value:     "engineer",
+		UseQuotes: true,
+	}
+	stmt.AddTable("t3", false)
+	stmt.AddRow("c1", "TEXT", true, nil)
+	stmt.AddRow("c2", "INTEGER", false, &dv1)
+	stmt.AddRow("c3", "TEXT", false, nil)
+	stmt.AddRow("c4", "TEXT", false, &dv2)
+
+	err := checkSQL(t, stmt.String())
+	if err != nil {
+		t.Errorf("Error running command: %v", err)
+	}
+}
