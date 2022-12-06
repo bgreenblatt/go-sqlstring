@@ -32,34 +32,34 @@ type SQLString struct {
 	useDoubleQuotes bool
 }
 
-type SelectAllUniqueOption int
+type SelectAllDistinctOption int
 
 const (
-	None SelectAllUniqueOption = iota
+	None SelectAllDistinctOption = iota
 	All
-	Unique
+	Distinct
 )
 
-func (s SelectAllUniqueOption) String() string {
+func (s SelectAllDistinctOption) String() string {
 	switch s {
 	case None:
 		return ""
 	case All:
 		return "ALL "
-	case Unique:
-		return "UNIQUE "
+	case Distinct:
+		return "DISTINCT "
 	default:
 		return ""
 	}
 }
 
 type SQLStringSelect struct {
-	allOrUnique SelectAllUniqueOption
-	sqlString   SQLString
-	columns     []string
-	tables      []string
-	where       string
-	groupby     []string
+	allOrDistinct SelectAllDistinctOption
+	sqlString     SQLString
+	columns       []string
+	tables        []string
+	where         string
+	groupby       []string
 }
 
 type SQLStringUpdate struct {
@@ -69,6 +69,15 @@ type SQLStringUpdate struct {
 	isquoted  []bool
 	table     string
 	where     string
+}
+
+type SQLStringInsert struct {
+	sqlString  SQLString
+	selectStmt *SQLStringSelect
+	columns    []string
+	values     []string
+	isquoted   []bool
+	table      string
 }
 
 func (t SQLString) String() string {
@@ -99,6 +108,24 @@ func (t *SQLString) AddStringWithQuotes(s string, addComma bool) {
 
 func (t *SQLString) AddStrings(s []string, sep string, addComma bool) {
 	t.buildsql.WriteString(strings.Join(s, sep))
+	if addComma {
+		t.buildsql.WriteString(",")
+	}
+}
+
+func (t *SQLString) AddStringsWithParens(s []string, sep string, addComma bool) {
+	t.buildsql.WriteString("(")
+	t.AddStrings(s, sep, false)
+	t.buildsql.WriteString(")")
+	if addComma {
+		t.buildsql.WriteString(",")
+	}
+}
+
+func (t *SQLString) AddStringWithParens(s string, addComma bool) {
+	t.buildsql.WriteString("(")
+	t.AddString(s, false)
+	t.buildsql.WriteString(")")
 	if addComma {
 		t.buildsql.WriteString(",")
 	}
@@ -166,14 +193,14 @@ func (t *SQLStringSelect) AddGroupBy(gb string, addComma bool) {
 	t.groupby = append(t.groupby, gb)
 }
 
-func (t *SQLStringSelect) AddAllUniqueOption(s SelectAllUniqueOption) {
-	t.allOrUnique = s
+func (t *SQLStringSelect) AddAllDistinctOption(s SelectAllDistinctOption) {
+	t.allOrDistinct = s
 }
 
 func (t *SQLStringSelect) String() string {
 	t.sqlString.Reset()
 	t.sqlString.AddString("SELECT ", false)
-	t.sqlString.AddString(t.allOrUnique.String(), false)
+	t.sqlString.AddString(t.allOrDistinct.String(), false)
 	columns := strings.Join(t.columns, ", ")
 	t.sqlString.AddString(columns, false)
 	tables := strings.Join(t.tables, ", ")
@@ -244,5 +271,56 @@ func (t *SQLStringUpdate) String() string {
 }
 
 func (t *SQLStringUpdate) Reset() {
+	t.sqlString.Reset()
+}
+
+func NewSQLStringInsert(useDoubleQuotes bool) *SQLStringInsert {
+	var stmt SQLStringInsert
+	if useDoubleQuotes {
+		stmt.sqlString.useDoubleQuotes = true
+	}
+	return &stmt
+}
+
+func (t *SQLStringInsert) AddColumnValue(c string, v string, q bool) {
+	var quoteString string
+	t.columns = append(t.columns, c)
+	if !q {
+		t.values = append(t.values, v)
+	} else {
+		if t.sqlString.useDoubleQuotes {
+			quoteString = "\""
+		} else {
+			quoteString = "'"
+		}
+		qv := quoteString + v + quoteString
+		t.values = append(t.values, qv)
+	}
+}
+
+func (t *SQLStringInsert) AddTable(tbl string, addComma bool) {
+	t.table = tbl
+}
+
+func (t *SQLStringInsert) AddSelect(s *SQLStringSelect) {
+	t.selectStmt = s
+}
+
+func (t *SQLStringInsert) String() string {
+	t.sqlString.Reset()
+	t.sqlString.AddString("INSERT INTO ", false)
+	t.sqlString.AddString(t.table, false)
+	t.sqlString.AddString(" ", false)
+	if t.selectStmt != nil {
+		t.sqlString.AddString(t.selectStmt.String(), false)
+	} else {
+		t.sqlString.AddStringsWithParens(t.columns, ", ", false)
+		t.sqlString.AddString(" VALUES ", false)
+		t.sqlString.AddStringsWithParens(t.values, ", ", false)
+	}
+	return t.sqlString.String()
+}
+
+func (t *SQLStringInsert) Reset() {
 	t.sqlString.Reset()
 }

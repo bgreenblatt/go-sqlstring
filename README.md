@@ -9,5 +9,4 @@ Notes:
     * UPDATE
     * INSERT
 1. There is also support for convenience functions for building strings so that arbitrary SQL queries can be created
-1. Test code uses `github.com/krasun/gosqlparser` for SQL statement validation, but some test cases would fail since
-   it doesn't support the full SQL Syntax.
+1. Test code uses the sqlite3 command line tool for SQL statement validation
