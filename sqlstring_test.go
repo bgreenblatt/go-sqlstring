@@ -290,7 +290,7 @@ func TestInsertExec(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	t.Parallel()
-	stmt := NewSQLStringDelete(true)
+	var stmt SQLStringDelete
 
 	stmt.AddTable("t2", false)
 	stmt.AddWhere("c2 = 'ID2'", false)
