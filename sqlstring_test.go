@@ -30,6 +30,7 @@ import (
 )
 
 func TestRawUpdate(t *testing.T) {
+	t.Parallel()
 	stmt := NewSQLString(true)
 
 	stmt.AddString("UPDATE t1 SET name = ", false)
@@ -44,6 +45,7 @@ func TestRawUpdate(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	t.Parallel()
 	stmt := NewSQLStringUpdate(true)
 
 	stmt.AddTable("t1", false)
@@ -58,6 +60,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestRawSelect(t *testing.T) {
+	t.Parallel()
 	var stmt SQLString
 
 	stmt.AddString("SELECT c1 FROM t2 WHERE c2 = ", false)
@@ -70,6 +73,7 @@ func TestRawSelect(t *testing.T) {
 }
 
 func TestRawSelect2(t *testing.T) {
+	t.Parallel()
 	stmt := NewSQLString(false)
 
 	stmt.AddString("SELECT c1 FROM t2 WHERE c2 = ", false)
@@ -82,6 +86,7 @@ func TestRawSelect2(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
+	t.Parallel()
 	var stmt SQLStringSelect
 
 	stmt.AddColumn("c1", false)
@@ -95,6 +100,7 @@ func TestSelect(t *testing.T) {
 }
 
 func TestSelect2(t *testing.T) {
+	t.Parallel()
 	var stmt SQLStringSelect
 
 	stmt.AddColumn("c1", false)
@@ -109,6 +115,7 @@ func TestSelect2(t *testing.T) {
 }
 
 func TestSelectGroupBy(t *testing.T) {
+	t.Parallel()
 	var stmt SQLStringSelect
 
 	stmt.AddColumn("c1", false)
@@ -119,12 +126,46 @@ func TestSelectGroupBy(t *testing.T) {
 
 	err := checkSQL(t, stmt.String())
 	if err != nil {
-		// t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
-		fmt.Printf("Found error %v parsing: %s\n", err, stmt.String())
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
+	}
+}
+
+func TestSelectOrderBy(t *testing.T) {
+	t.Parallel()
+	var stmt SQLStringSelect
+
+	stmt.AddColumn("c1", false)
+	stmt.AddColumn("c2", false)
+	stmt.AddTable("t2", false)
+	stmt.AddWhere("c2 == 'ID2'", false)
+	stmt.AddOrderBy("c2", false)
+
+	err := checkSQL(t, stmt.String())
+	if err != nil {
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
+	}
+}
+
+func TestSelectGroupAndOrderByLimit(t *testing.T) {
+	t.Parallel()
+	var stmt SQLStringSelect
+
+	stmt.AddColumn("c1", false)
+	stmt.AddColumn("c2", false)
+	stmt.AddTable("t2", false)
+	stmt.AddWhere("c2 == 'ID2'", false)
+	stmt.AddOrderBy("c2", false)
+	stmt.AddGroupBy("c2", false)
+	stmt.AddLimit(10, false)
+
+	err := checkSQL(t, stmt.String())
+	if err != nil {
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
 	}
 }
 
 func TestSelectTableAlias(t *testing.T) {
+	t.Parallel()
 	var stmt SQLStringSelect
 
 	stmt.AddColumn("t.c1", false)
@@ -134,12 +175,12 @@ func TestSelectTableAlias(t *testing.T) {
 
 	err := checkSQL(t, stmt.String())
 	if err != nil {
-		// t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
-		fmt.Printf("Found error %v parsing: %s\n", err, stmt.String())
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
 	}
 }
 
 func TestSelectDistinct(t *testing.T) {
+	t.Parallel()
 	var stmt SQLStringSelect
 
 	stmt.AddColumn("c1", false)
@@ -150,12 +191,12 @@ func TestSelectDistinct(t *testing.T) {
 
 	err := checkSQL(t, stmt.String())
 	if err != nil {
-		// t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
-		fmt.Printf("Found error %v parsing: %s\n", err, stmt.String())
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
 	}
 }
 
 func TestInsert(t *testing.T) {
+	t.Parallel()
 	stmt := NewSQLStringInsert(true)
 
 	stmt.AddTable("t1", false)
@@ -163,7 +204,6 @@ func TestInsert(t *testing.T) {
 	stmt.AddColumnValue("position", "Engineer", true)
 	stmt.AddColumnValue("salary", "100000", false)
 
-	fmt.Printf("SQL Insert statement is %s\n", stmt.String())
 	err := checkSQL(t, stmt.String())
 	if err != nil {
 		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
@@ -171,6 +211,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestInsertSelect(t *testing.T) {
+	t.Parallel()
 	stmt := NewSQLStringInsert(false)
 	selectStmt := NewSQLStringSelect(false)
 
@@ -182,7 +223,6 @@ func TestInsertSelect(t *testing.T) {
 	selectStmt.AddWhere("c2 = 'ID2'", false)
 	stmt.AddSelect(selectStmt)
 
-	fmt.Printf("SQL Insert statement is %s\n", stmt.String())
 	err := checkSQL(t, stmt.String())
 	if err != nil {
 		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
@@ -190,17 +230,17 @@ func TestInsertSelect(t *testing.T) {
 }
 
 func TestLaunchSQLite3(t *testing.T) {
+	t.Parallel()
 	defer os.Remove("t2.db")
 	err := createDB("t2.db")
 	if err != nil {
 		t.Errorf("Error creating DB: %v", err)
 	}
 	cmd := exec.Command("sqlite3", "t2.db", ".dump")
-	out, err := cmd.CombinedOutput()
+	_, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Errorf("Error running command: %v", err)
 	}
-	fmt.Printf("%s\n", out)
 }
 
 func createDB(dbName string) error {
@@ -222,6 +262,7 @@ func checkSQL(t *testing.T, query string) error {
 	}
 	defer os.Remove("t2.db")
 
+	fmt.Printf("Checking query %s\n", query)
 	cmd := exec.Command("sqlite3", "t2.db", query)
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", out)
@@ -232,6 +273,7 @@ func checkSQL(t *testing.T, query string) error {
 }
 
 func TestInsertExec(t *testing.T) {
+	t.Parallel()
 	stmt := NewSQLStringInsert(true)
 
 	stmt.AddTable("t1", false)
@@ -247,6 +289,7 @@ func TestInsertExec(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	t.Parallel()
 	stmt := NewSQLStringDelete(true)
 
 	stmt.AddTable("t2", false)
@@ -259,6 +302,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestCreateTable(t *testing.T) {
+	t.Parallel()
 	stmt := NewSQLStringCreateTable(true)
 
 	dv1 := DefaultValue{

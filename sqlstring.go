@@ -24,6 +24,7 @@ package sqlstring
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -65,6 +66,8 @@ type SQLStringSelect struct {
 	tables        []string
 	where         string
 	groupby       []string
+	orderby       []string
+	limit         uint
 }
 
 type SQLStringUpdate struct {
@@ -167,7 +170,15 @@ func (t *SQLString) AddStringsWithQuotes(s []string, sep string, addComma bool) 
 }
 
 func (t *SQLString) AddInt(i int, addComma bool) {
-	s := fmt.Sprintf(" %d", i)
+	s := strconv.Itoa(i)
+	t.buildsql.WriteString(s)
+	if addComma {
+		t.buildsql.WriteString(",")
+	}
+}
+
+func (t *SQLString) AddUInt(i uint, addComma bool) {
+	s := strconv.FormatUint(uint64(i), 10)
 	t.buildsql.WriteString(s)
 	if addComma {
 		t.buildsql.WriteString(",")
@@ -210,6 +221,14 @@ func (t *SQLStringSelect) AddGroupBy(gb string, addComma bool) {
 	t.groupby = append(t.groupby, gb)
 }
 
+func (t *SQLStringSelect) AddOrderBy(ob string, addComma bool) {
+	t.orderby = append(t.orderby, ob)
+}
+
+func (t *SQLStringSelect) AddLimit(limit uint, addComma bool) {
+	t.limit = limit
+}
+
 func (t *SQLStringSelect) AddAllDistinctOption(s SelectAllDistinctOption) {
 	t.allOrDistinct = s
 }
@@ -229,6 +248,15 @@ func (t *SQLStringSelect) String() string {
 		gbs := strings.Join(t.groupby, ", ")
 		t.sqlString.AddString(" GROUP BY ", false)
 		t.sqlString.AddString(gbs, false)
+	}
+	if len(t.orderby) > 0 {
+		obs := strings.Join(t.orderby, ", ")
+		t.sqlString.AddString(" ORDER BY ", false)
+		t.sqlString.AddString(obs, false)
+	}
+	if t.limit > 0 {
+		t.sqlString.AddString(" LIMIT ", false)
+		t.sqlString.AddUInt(t.limit, false)
 	}
 	return t.sqlString.String()
 }
