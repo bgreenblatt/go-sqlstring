@@ -26,7 +26,7 @@ Building up strings for SQL queries can be done as in the following code segment
 	stmt.AddWhere("c2 == 'ID2'", false)
 	stmt.AddOrderBy("c2", false)
 	stmt.AddGroupBy("c2", false)
-	stmt.AddLimit(10, false)
+	stmt.AddLimit(10, 0, false)
 ```
 
 Then the result of `stmt.String()` would yield this query string:
@@ -49,7 +49,7 @@ parameter like this:
 	stmt.AddWhere("c2 == 'ID2'", false)
 	stmt.AddOrderBy("c2", false)
 	stmt.AddGroupBy("c2", false)
-	stmt.AddLimit(10, false)
+	stmt.AddLimit(10, 0, false)
 ```
 
 Then the result of `stmt.String()` would yield this query string:

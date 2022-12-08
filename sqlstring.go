@@ -68,6 +68,7 @@ type SQLStringSelect struct {
 	groupby       []string
 	orderby       []string
 	limit         uint
+	offset        uint
 }
 
 type SQLStringUpdate struct {
@@ -225,8 +226,9 @@ func (t *SQLStringSelect) AddOrderBy(ob string, addComma bool) {
 	t.orderby = append(t.orderby, ob)
 }
 
-func (t *SQLStringSelect) AddLimit(limit uint, addComma bool) {
+func (t *SQLStringSelect) AddLimit(limit, offset uint, addComma bool) {
 	t.limit = limit
+	t.offset = offset
 }
 
 func (t *SQLStringSelect) AddAllDistinctOption(s SelectAllDistinctOption) {
@@ -257,6 +259,10 @@ func (t *SQLStringSelect) String() string {
 	if t.limit > 0 {
 		t.sqlString.AddString(" LIMIT ", false)
 		t.sqlString.AddUInt(t.limit, false)
+		if t.offset > 0 {
+			t.sqlString.AddString(" OFFSET ", false)
+			t.sqlString.AddUInt(t.offset, false)
+		}
 	}
 	return t.sqlString.String()
 }

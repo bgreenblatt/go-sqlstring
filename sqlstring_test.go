@@ -156,7 +156,25 @@ func TestSelectGroupAndOrderByLimit(t *testing.T) {
 	stmt.AddWhere("c2 == 'ID2'", false)
 	stmt.AddOrderBy("c2", false)
 	stmt.AddGroupBy("c2", false)
-	stmt.AddLimit(10, false)
+	stmt.AddLimit(10, 0, false)
+
+	err := checkSQL(t, stmt.String())
+	if err != nil {
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
+	}
+}
+
+func TestSelectGroupAndOrderByLimitWithOffset(t *testing.T) {
+	t.Parallel()
+	var stmt SQLStringSelect
+
+	stmt.AddColumn("c1", false)
+	stmt.AddColumn("c2", false)
+	stmt.AddTable("t2", false)
+	stmt.AddWhere("c2 == 'ID2'", false)
+	stmt.AddOrderBy("c2", false)
+	stmt.AddGroupBy("c2", false)
+	stmt.AddLimit(10, 50, false)
 
 	err := checkSQL(t, stmt.String())
 	if err != nil {
