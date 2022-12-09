@@ -213,6 +213,30 @@ func TestSelectDistinct(t *testing.T) {
 	}
 }
 
+func TestCompoundSelect(t *testing.T) {
+	t.Parallel()
+	var stmtLeft, stmtRight SQLStringSelect
+	var stmt SQLStringCompoundSelect
+
+	stmtLeft.AddColumn("c1", false)
+	stmtLeft.AddColumn("c2", false)
+	stmtLeft.AddTable("t2", false)
+	stmtLeft.AddWhere("c2 == 'ID3'", false)
+
+	stmtRight.AddColumn("c1", false)
+	stmtRight.AddColumn("c3", false)
+	stmtRight.AddTable("t2", false)
+	stmtRight.AddWhere("c2 == 'ID2'", false)
+
+	stmt.SetLeft(stmtLeft)
+	stmt.SetRight(stmtRight)
+	stmt.SetJunction(Union)
+	err := checkSQL(t, stmt.String())
+	if err != nil {
+		t.Errorf("Found error %v parsing: %s\n", err, stmt.String())
+	}
+}
+
 func TestInsert(t *testing.T) {
 	t.Parallel()
 	stmt := NewSQLStringInsert(true)
@@ -340,5 +364,16 @@ func TestCreateTable(t *testing.T) {
 	err := checkSQL(t, stmt.String())
 	if err != nil {
 		t.Errorf("Error running command: %v", err)
+	}
+}
+
+func TestBadSQL(t *testing.T) {
+	t.Parallel()
+	stmt := NewSQLString(true)
+
+	stmt.AddString("This is some bad SQL", false)
+	err := checkSQL(t, stmt.String())
+	if err == nil {
+		t.Errorf("This string should have caused an error in the check but did not")
 	}
 }

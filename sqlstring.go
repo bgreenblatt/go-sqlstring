@@ -60,15 +60,46 @@ type DefaultValue struct {
 }
 
 type SQLStringSelect struct {
-	allOrDistinct SelectAllDistinctOption
 	sqlString     SQLString
 	columns       []string
 	tables        []string
 	where         string
 	groupby       []string
 	orderby       []string
+	allOrDistinct SelectAllDistinctOption
 	limit         uint
 	offset        uint
+}
+
+type SelectJunctionOption int
+
+const (
+	Union SelectJunctionOption = iota
+	UnionAll
+	Intersect
+	Except
+)
+
+func (s SelectJunctionOption) String() string {
+	switch s {
+	case Union:
+		return " UNION "
+	case UnionAll:
+		return " ALL "
+	case Intersect:
+		return " DISTINCT "
+	case Except:
+		return " EXCEPT "
+	default:
+		return ""
+	}
+}
+
+type SQLStringCompoundSelect struct {
+	sqlString      SQLString
+	sqlStringLeft  SQLStringSelect
+	sqlStringRight SQLStringSelect
+	junction       SelectJunctionOption
 }
 
 type SQLStringUpdate struct {
@@ -268,6 +299,39 @@ func (t *SQLStringSelect) String() string {
 }
 
 func (t *SQLStringSelect) Reset() {
+	t.sqlString.Reset()
+}
+
+func NewSQLStringCompoundSelect(useDoubleQuotes bool) *SQLStringCompoundSelect {
+	var stmt SQLStringCompoundSelect
+	if useDoubleQuotes {
+		stmt.sqlStringLeft.sqlString.useDoubleQuotes = true
+		stmt.sqlStringRight.sqlString.useDoubleQuotes = true
+	}
+	return &stmt
+}
+
+func (t *SQLStringCompoundSelect) SetLeft(s SQLStringSelect) {
+	t.sqlStringLeft = s
+}
+
+func (t *SQLStringCompoundSelect) SetRight(s SQLStringSelect) {
+	t.sqlStringRight = s
+}
+
+func (t *SQLStringCompoundSelect) SetJunction(j SelectJunctionOption) {
+	t.junction = j
+}
+
+func (t *SQLStringCompoundSelect) String() string {
+	t.sqlString.Reset()
+	t.sqlString.AddString(t.sqlStringLeft.String(), false)
+	t.sqlString.AddString(t.junction.String(), false)
+	t.sqlString.AddString(t.sqlStringRight.String(), false)
+	return t.sqlString.String()
+}
+
+func (t *SQLStringCompoundSelect) Reset() {
 	t.sqlString.Reset()
 }
 

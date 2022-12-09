@@ -5,7 +5,7 @@ Notes:
 
 1. This library uses strings.Builder since it is much faster than concatenating strings with "+".
 1. Current version includes support for the following basic SQL queries:
-    * SELECT
+    * SELECT (including compound SELECTs like UNION)
     * UPDATE
     * INSERT
     * DELETE
