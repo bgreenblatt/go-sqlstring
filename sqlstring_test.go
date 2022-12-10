@@ -345,7 +345,7 @@ func TestDelete(t *testing.T) {
 
 func TestCreateTable(t *testing.T) {
 	t.Parallel()
-	stmt := NewSQLStringCreateTable(true)
+	stmt := NewSQLStringCreateTable(true, false)
 
 	dv1 := DefaultValue{
 		Value:     "CURRENT_TIMESTAMP",
@@ -361,6 +361,33 @@ func TestCreateTable(t *testing.T) {
 	stmt.AddRow("c3", "TEXT", false, nil)
 	stmt.AddRow("c4", "TEXT", false, &dv2)
 
+	err := checkSQL(t, stmt.String())
+	if err != nil {
+		t.Errorf("Error running command: %v", err)
+	}
+	stmt = NewSQLStringCreateTable(true, true)
+
+	stmt.AddTable("t4", false)
+	stmt.AddRow("c1", "TEXT", true, nil)
+	stmt.AddRow("c2", "INTEGER", false, &dv1)
+	stmt.AddRow("c3", "TEXT", false, nil)
+	stmt.AddRow("c4", "TEXT", false, &dv2)
+
+	err = checkSQL(t, stmt.String())
+	if err != nil {
+		t.Errorf("Error running command: %v", err)
+	}
+}
+
+func TestCreateIndex(t *testing.T) {
+	t.Parallel()
+
+	stmt := NewSQLStringCreateIndex(false, true, true)
+	stmt.AddTable("t1", false)
+	stmt.AddIndex("t1_idx", false)
+	stmt.AddColumn("name")
+	stmt.AddColumn("position")
+	stmt.AddWhere("position == 'engineer'", false)
 	err := checkSQL(t, stmt.String())
 	if err != nil {
 		t.Errorf("Error running command: %v", err)

@@ -127,9 +127,20 @@ type SQLStringDelete struct {
 }
 
 type SQLStringCreateTable struct {
-	sqlString SQLString
-	table     string
-	rows      []string
+	sqlString   SQLString
+	table       string
+	rows        []string
+	ifNotExists bool
+}
+
+type SQLStringCreateIndex struct {
+	sqlString   SQLString
+	table       string
+	index       string
+	columns     []string
+	ifNotExists bool
+	isUnique    bool
+	where       string
 }
 
 func (t SQLString) String() string {
@@ -472,11 +483,12 @@ func (t *SQLStringDelete) Reset() {
 	t.sqlString.Reset()
 }
 
-func NewSQLStringCreateTable(useDoubleQuotes bool) *SQLStringCreateTable {
+func NewSQLStringCreateTable(useDoubleQuotes, ifNotExists bool) *SQLStringCreateTable {
 	var stmt SQLStringCreateTable
 	if useDoubleQuotes {
 		stmt.sqlString.useDoubleQuotes = true
 	}
+	stmt.ifNotExists = ifNotExists
 	return &stmt
 }
 
@@ -507,11 +519,65 @@ func (t *SQLStringCreateTable) AddRow(cn string, tv string, pk bool, dv *Default
 func (t *SQLStringCreateTable) String() string {
 	t.sqlString.Reset()
 	t.sqlString.AddString("CREATE TABLE ", false)
+	if t.ifNotExists {
+		t.sqlString.AddString("IF NOT EXISTS ", false)
+	}
 	t.sqlString.AddString(t.table, false)
 	t.sqlString.AddStringsWithParens(t.rows, ", ", false)
 	return t.sqlString.String()
 }
 
 func (t *SQLStringCreateTable) Reset() {
+	t.sqlString.Reset()
+}
+
+func NewSQLStringCreateIndex(useDoubleQuotes, ifNotExists, isUnique bool) *SQLStringCreateIndex {
+	var stmt SQLStringCreateIndex
+	if useDoubleQuotes {
+		stmt.sqlString.useDoubleQuotes = true
+	}
+	stmt.ifNotExists = ifNotExists
+	stmt.isUnique = isUnique
+	return &stmt
+}
+
+func (t *SQLStringCreateIndex) AddTable(tbl string, addComma bool) {
+	t.table = tbl
+}
+
+func (t *SQLStringCreateIndex) AddIndex(idx string, addComma bool) {
+	t.index = idx
+}
+
+func (t *SQLStringCreateIndex) AddColumn(cn string) {
+	t.columns = append(t.columns, cn)
+}
+
+func (t *SQLStringCreateIndex) AddWhere(w string, addComma bool) {
+	t.where = w
+}
+
+func (t *SQLStringCreateIndex) String() string {
+	t.sqlString.Reset()
+	if t.isUnique {
+		t.sqlString.AddString("CREATE UNIQUE INDEX ", false)
+	} else {
+		t.sqlString.AddString("CREATE INDEX ", false)
+	}
+	if t.ifNotExists {
+		t.sqlString.AddString("IF NOT EXISTS ", false)
+	}
+	t.sqlString.AddString(t.index, false)
+	t.sqlString.AddString(" ON ", false)
+	t.sqlString.AddString(t.table, false)
+	t.sqlString.AddStringsWithParens(t.columns, ", ", false)
+	if t.where != "" {
+		t.sqlString.AddString(" WHERE ", false)
+		t.sqlString.AddString(t.where, false)
+	}
+	return t.sqlString.String()
+}
+
+func (t *SQLStringCreateIndex) Reset() {
 	t.sqlString.Reset()
 }

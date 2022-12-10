@@ -10,6 +10,7 @@ Notes:
     * INSERT
     * DELETE
     * CREATE TABLE
+    * CREATE INDEX
 1. There is also support for convenience functions for building strings so that arbitrary SQL queries can be created
 1. Test code uses the sqlite3 command line tool for SQL statement validation
 
