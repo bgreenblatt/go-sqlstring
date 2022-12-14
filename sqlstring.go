@@ -126,11 +126,18 @@ type SQLStringDelete struct {
 	where     string
 }
 
+type ForeignKeyConstraint struct {
+	srcColumns []string
+	tgtColumns []string
+	table      string
+}
+
 type SQLStringCreateTable struct {
 	sqlString   SQLString
 	table       string
-	rows        []string
+	columns     []string
 	ifNotExists bool
+	foreignKeys []ForeignKeyConstraint
 }
 
 type SQLStringCreateIndex struct {
@@ -496,24 +503,39 @@ func (t *SQLStringCreateTable) AddTable(tbl string, addComma bool) {
 	t.table = tbl
 }
 
-func (t *SQLStringCreateTable) AddRow(cn string, tv string, pk bool, dv *DefaultValue) {
-	var rowString SQLString
+func (t *SQLStringCreateTable) AddColumn(cn string, tv string, pk bool, dv *DefaultValue) {
+	var colString SQLString
 
-	rowString.AddString(cn, false)
-	rowString.AddString(" ", false)
-	rowString.AddString(tv, false)
+	colString.AddString(cn, false)
+	colString.AddString(" ", false)
+	colString.AddString(tv, false)
 	if pk {
-		rowString.AddString(" PRIMARY KEY ", false)
+		colString.AddString(" PRIMARY KEY ", false)
 	} else if dv != nil {
-		rowString.AddString(" DEFAULT ", false)
+		colString.AddString(" DEFAULT ", false)
 		v := fmt.Sprintf("%v", dv.Value)
 		if dv.UseQuotes {
-			rowString.AddStringWithQuotes(v, false)
+			colString.AddStringWithQuotes(v, false)
 		} else {
-			rowString.AddString(v, false)
+			colString.AddString(v, false)
 		}
 	}
-	t.rows = append(t.rows, rowString.String())
+	t.columns = append(t.columns, colString.String())
+}
+
+func (t *SQLStringCreateTable) AddForeignKeyConstraint(srcColumns, tgtColumns []string, table string) {
+	var fk ForeignKeyConstraint
+
+	fmt.Printf("foreign key params: %v, %v, %s\n", srcColumns, tgtColumns, table)
+	for _, src := range srcColumns {
+		fk.srcColumns = append(fk.srcColumns, src)
+	}
+	for _, tgt := range tgtColumns {
+		fk.tgtColumns = append(fk.tgtColumns, tgt)
+	}
+	fk.table = table
+	fmt.Printf("Adding foreign key: %v\n", fk)
+	t.foreignKeys = append(t.foreignKeys, fk)
 }
 
 func (t *SQLStringCreateTable) String() string {
@@ -523,7 +545,20 @@ func (t *SQLStringCreateTable) String() string {
 		t.sqlString.AddString("IF NOT EXISTS ", false)
 	}
 	t.sqlString.AddString(t.table, false)
-	t.sqlString.AddStringsWithParens(t.rows, ", ", false)
+	if len(t.foreignKeys) == 0 {
+		t.sqlString.AddStringsWithParens(t.columns, ", ", false)
+	} else {
+		t.sqlString.AddString("(", false)
+		t.sqlString.AddStrings(t.columns, ", ", false)
+		for _, fk := range t.foreignKeys {
+			t.sqlString.AddString(", FOREIGN KEY ", false)
+			t.sqlString.AddStringsWithParens(fk.srcColumns, ", ", false)
+			t.sqlString.AddString(" REFERENCES ", false)
+			t.sqlString.AddString(fk.table, false)
+			t.sqlString.AddStringsWithParens(fk.tgtColumns, ", ", false)
+		}
+		t.sqlString.AddString(")", false)
+	}
 	return t.sqlString.String()
 }
 

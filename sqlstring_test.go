@@ -356,22 +356,42 @@ func TestCreateTable(t *testing.T) {
 		UseQuotes: true,
 	}
 	stmt.AddTable("t3", false)
-	stmt.AddRow("c1", "TEXT", true, nil)
-	stmt.AddRow("c2", "INTEGER", false, &dv1)
-	stmt.AddRow("c3", "TEXT", false, nil)
-	stmt.AddRow("c4", "TEXT", false, &dv2)
+	stmt.AddColumn("c1", "TEXT", true, nil)
+	stmt.AddColumn("c2", "INTEGER", false, &dv1)
+	stmt.AddColumn("c3", "TEXT", false, nil)
+	stmt.AddColumn("c4", "TEXT", false, &dv2)
 
 	err := checkSQL(t, stmt.String())
 	if err != nil {
 		t.Errorf("Error running command: %v", err)
 	}
+
 	stmt = NewSQLStringCreateTable(true, true)
 
 	stmt.AddTable("t4", false)
-	stmt.AddRow("c1", "TEXT", true, nil)
-	stmt.AddRow("c2", "INTEGER", false, &dv1)
-	stmt.AddRow("c3", "TEXT", false, nil)
-	stmt.AddRow("c4", "TEXT", false, &dv2)
+	stmt.AddColumn("c1", "TEXT", true, nil)
+	stmt.AddColumn("c2", "INTEGER", false, &dv1)
+	stmt.AddColumn("c3", "TEXT", false, nil)
+	stmt.AddColumn("c4", "TEXT", false, &dv2)
+
+	err = checkSQL(t, stmt.String())
+	if err != nil {
+		t.Errorf("Error running command: %v", err)
+	}
+
+	stmt = NewSQLStringCreateTable(true, true)
+
+	srcColumns := []string{"c1, c2"}
+	tgtColumns := []string{"c1, c2"}
+	stmt.AddTable("t5", false)
+	stmt.AddColumn("c1", "TEXT", true, nil)
+	stmt.AddColumn("c2", "INTEGER", false, &dv1)
+	stmt.AddColumn("c3", "TEXT", false, nil)
+	stmt.AddColumn("c4", "TEXT", false, &dv2)
+	stmt.AddForeignKeyConstraint(srcColumns, tgtColumns, "t2")
+	srcColumns = []string{"c3"}
+	tgtColumns = []string{"c3"}
+	stmt.AddForeignKeyConstraint(srcColumns, tgtColumns, "t2")
 
 	err = checkSQL(t, stmt.String())
 	if err != nil {
