@@ -14,6 +14,14 @@ Notes:
 1. There is also support for convenience functions for building strings so that arbitrary SQL queries can be created
 1. Test code uses the sqlite3 command line tool for SQL statement validation
 
+Install:
+
+To use the package, just use the standard go get method:
+
+```
+go get github.com/bgreenblatt/sqlstring
+```
+
 Usage:
 
 Building up strings for SQL queries can be done as in the following code segment:
