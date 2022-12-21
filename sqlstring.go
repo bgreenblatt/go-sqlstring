@@ -150,6 +150,50 @@ type SQLStringCreateIndex struct {
 	where       string
 }
 
+type TransactionType int
+
+const (
+	Begin TransactionType = iota
+	Commit
+	Rollback
+)
+
+func (t TransactionType) String() string {
+	switch t {
+	case Begin:
+		return "BEGIN"
+	case Commit:
+		return "COMMIT"
+	case Rollback:
+		return "ROLLBACK"
+	default:
+		return ""
+	}
+}
+
+type SQLStringTransaction struct {
+	sqlString       SQLString
+	transactionType TransactionType
+}
+
+func NewSQLStringTransaction(t TransactionType) *SQLStringTransaction {
+	var stmt SQLStringTransaction
+
+	stmt.transactionType = t
+	return &stmt
+}
+
+func (t *SQLStringTransaction) Reset() {
+	t.sqlString.Reset()
+}
+
+func (t *SQLStringTransaction) String() string {
+	t.sqlString.Reset()
+	t.sqlString.AddString(t.transactionType.String(), false)
+	t.sqlString.AddString(" TRANSACTION", false)
+	return t.sqlString.String()
+}
+
 func (t SQLString) String() string {
 	return t.buildsql.String()
 }

@@ -252,6 +252,34 @@ func TestInsert(t *testing.T) {
 	}
 }
 
+func TestInsertTransaction(t *testing.T) {
+	t.Parallel()
+	stmt1 := NewSQLStringInsert(true)
+	stmt2 := NewSQLStringInsert(true)
+	beginStmt := NewSQLStringTransaction(Begin)
+	commitStmt := NewSQLStringTransaction(Commit)
+
+	stmt1.AddTable("t1", false)
+	stmt1.AddColumnValue("name", "Bruce", true)
+	stmt1.AddColumnValue("position", "Engineer", true)
+	stmt1.AddColumnValue("salary", "100000", false)
+	stmt2.AddTable("t1", false)
+	stmt2.AddColumnValue("name", "Fred", true)
+	stmt2.AddColumnValue("position", "Sales", true)
+	stmt2.AddColumnValue("salary", "150000", false)
+
+	stmts := []string{
+		beginStmt.String(),
+		stmt1.String(),
+		stmt2.String(),
+		commitStmt.String(),
+	}
+	err := checkSQLStmts(t, stmts)
+	if err != nil {
+		t.Errorf("Found error %v parsing: %v\n", err, stmts)
+	}
+}
+
 func TestInsertSelect(t *testing.T) {
 	t.Parallel()
 	stmt := NewSQLStringInsert(false)
@@ -309,6 +337,28 @@ func checkSQL(t *testing.T, query string) error {
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s\n", out)
 	cmd = exec.Command("sqlite3", "t2.db", ".dump")
+	outTemp, _ := cmd.CombinedOutput()
+	fmt.Printf("%s\n", outTemp)
+	return err
+}
+
+func checkSQLStmts(t *testing.T, queries []string) error {
+	err := createDB("t2.db")
+	if err != nil {
+		t.Errorf("Error creating DB: %v", err)
+	}
+	defer os.Remove("t2.db")
+
+	for _, query := range queries {
+		fmt.Printf("Checking query %s\n", query)
+		cmd := exec.Command("sqlite3", "t2.db", query)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			break
+		}
+		fmt.Printf("%s\n", out)
+	}
+	cmd := exec.Command("sqlite3", "t2.db", ".dump")
 	outTemp, _ := cmd.CombinedOutput()
 	fmt.Printf("%s\n", outTemp)
 	return err

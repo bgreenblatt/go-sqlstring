@@ -11,6 +11,7 @@ Notes:
     * DELETE
     * CREATE TABLE
     * CREATE INDEX
+    * BEGIN and COMMIT TRANSACTION
 1. There is also support for convenience functions for building strings so that arbitrary SQL queries can be created
 1. Test code uses the sqlite3 command line tool for SQL statement validation
 
