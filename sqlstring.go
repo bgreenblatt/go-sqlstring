@@ -112,12 +112,13 @@ type SQLStringUpdate struct {
 }
 
 type SQLStringInsert struct {
-	sqlString  SQLString
-	selectStmt *SQLStringSelect
-	columns    []string
-	values     []string
-	isquoted   []bool
-	table      string
+	sqlString      SQLString
+	selectStmt     *SQLStringSelect
+	columns        []string
+	values         []string
+	isquoted       []bool
+	table          string
+	conflictOption InsertConflictOption
 }
 
 type SQLStringDelete struct {
@@ -451,6 +452,30 @@ func (t *SQLStringUpdate) Reset() {
 	t.sqlString.Reset()
 }
 
+type InsertConflictOption int
+
+const (
+	NoConflict InsertConflictOption = iota
+	Replace
+	Ignore
+)
+
+func (s InsertConflictOption) String() string {
+	switch s {
+	case NoConflict:
+		return ""
+	case Replace:
+		return "OR REPLACE "
+	case Ignore:
+		return "OR IGNORE "
+	default:
+		return ""
+	}
+}
+func (t *SQLStringInsert) AddConflictOption(s InsertConflictOption) {
+	t.conflictOption = s
+}
+
 func NewSQLStringInsert(useDoubleQuotes bool) *SQLStringInsert {
 	var stmt SQLStringInsert
 	if useDoubleQuotes {
@@ -485,7 +510,9 @@ func (t *SQLStringInsert) AddSelect(s *SQLStringSelect) {
 
 func (t *SQLStringInsert) String() string {
 	t.sqlString.Reset()
-	t.sqlString.AddString("INSERT INTO ", false)
+	t.sqlString.AddString("INSERT ", false)
+	t.sqlString.AddString(t.conflictOption.String(), false)
+	t.sqlString.AddString("INTO ", false)
 	t.sqlString.AddString(t.table, false)
 	t.sqlString.AddString(" ", false)
 	if t.selectStmt != nil {

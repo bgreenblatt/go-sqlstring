@@ -7,7 +7,7 @@ Notes:
 1. Current version includes support for the following basic SQL queries:
     * SELECT (including compound SELECTs like UNION)
     * UPDATE
-    * INSERT
+    * INSERT (including REPLACE or IGNORE options)
     * DELETE
     * CREATE TABLE
     * CREATE INDEX

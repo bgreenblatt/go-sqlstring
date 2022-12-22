@@ -252,6 +252,32 @@ func TestInsert(t *testing.T) {
 	}
 }
 
+func TestInsertReplace(t *testing.T) {
+	t.Parallel()
+	stmt1 := NewSQLStringInsert(true)
+
+	stmt1.AddTable("t1", false)
+	stmt1.AddColumnValue("name", "Bruce", true)
+	stmt1.AddColumnValue("position", "Engineer", true)
+	stmt1.AddColumnValue("salary", "100000", false)
+
+	stmt2 := NewSQLStringInsert(true)
+	stmt2.AddTable("t1", false)
+	stmt2.AddColumnValue("name", "Bruce", true)
+	stmt2.AddColumnValue("position", "Engineer", true)
+	stmt2.AddColumnValue("salary", "110000", false)
+	stmt2.AddConflictOption(Replace)
+
+	stmts := []string{
+		stmt1.String(),
+		stmt2.String(),
+	}
+	err := checkSQLStmts(t, stmts)
+	if err != nil {
+		t.Errorf("Found error %v parsing: %v\n", err, stmts)
+	}
+}
+
 func TestInsertTransaction(t *testing.T) {
 	t.Parallel()
 	stmt1 := NewSQLStringInsert(true)
