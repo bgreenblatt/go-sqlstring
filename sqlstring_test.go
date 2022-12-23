@@ -138,7 +138,7 @@ func TestSelectOrderBy(t *testing.T) {
 	stmt.AddColumn("c2", false)
 	stmt.AddTable("t2", false)
 	stmt.AddWhere("c2 == 'ID2'", false)
-	stmt.AddOrderBy("c2", false)
+	stmt.AddOrderBy("c2", Descending)
 
 	err := checkSQL(t, stmt.String())
 	if err != nil {
@@ -154,7 +154,7 @@ func TestSelectGroupAndOrderByLimit(t *testing.T) {
 	stmt.AddColumn("c2", false)
 	stmt.AddTable("t2", false)
 	stmt.AddWhere("c2 == 'ID2'", false)
-	stmt.AddOrderBy("c2", false)
+	stmt.AddOrderBy("c2", Ascending)
 	stmt.AddGroupBy("c2", false)
 	stmt.AddLimit(10, 0, false)
 
@@ -172,7 +172,7 @@ func TestSelectGroupAndOrderByLimitWithOffset(t *testing.T) {
 	stmt.AddColumn("c2", false)
 	stmt.AddTable("t2", false)
 	stmt.AddWhere("c2 == 'ID2'", false)
-	stmt.AddOrderBy("c2", false)
+	stmt.AddOrderBy("c2", Ascending)
 	stmt.AddGroupBy("c2", false)
 	stmt.AddLimit(10, 50, false)
 
